@@ -30,5 +30,5 @@ ADD ./docker-entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 ADD ./Dockerfile /Dockerfile
 
-ENTRYPOINT /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
 
