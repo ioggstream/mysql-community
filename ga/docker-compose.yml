@@ -1,20 +1,18 @@
 #
-# Run a master and a slave server with GTID enabled
+# Run a master and a slave server with GTID enabled and read-only
 # 
 master:
-  image: mysql-community
+  image: mysql-community:latest
   hostname: master
   environment:
     - MYSQL_ROOT_PASSWORD=root
     - MYSQL_REPLICA_USER=repl
     - MYSQL_REPLICA_PASS=repl
-  entrypoint:
-    - /entrypoint.sh
   command: mysqld --server-id=1 --log-bin=master-bin --relay-log=master-relay-bin --log-slave-updates --relay-log-recovery=1 --master-info-repository=TABLE --relay-log-info-repository=TABLE --gtid-mode=ON --enforce-gtid-consistency --report-host=master --explicit-defaults-for-timestamp
 
 
 slave:
-  image: mysql-community
+  image: mysql-community:latest
   environment:
     - MYSQL_ROOT_PASSWORD=root
     - MYSQL_REPLICA_USER=repl
@@ -24,6 +22,4 @@ slave:
     - MYSQL_MASTER_WAIT_TIME=60
   links:
     - master
-  entrypoint:
-    - /entrypoint.sh
-  command: mysqld --server-id=2 --log-bin=slave-bin --relay-log=slave-relay-bin --log-slave-updates --relay-log-recovery=1 --master-info-repository=TABLE --relay-log-info-repository=TABLE --gtid-mode=ON --enforce-gtid-consistency --report-host --explicit-defaults-for-timestamp
+  command: mysqld --server-id=2 --log-bin=slave-bin --relay-log=slave-relay-bin --log-slave-updates --relay-log-recovery=1 --master-info-repository=TABLE --relay-log-info-repository=TABLE --gtid-mode=ON --enforce-gtid-consistency --report-host --explicit-defaults-for-timestamp --read-only

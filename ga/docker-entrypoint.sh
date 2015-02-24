@@ -4,6 +4,7 @@
 #  - MYSQL_ROOT_PASSWORD
 #  - MYSQL_REPLICA_USER: create the given user on the intended master host
 #  - MYSQL_REPLICA_PASS
+#  - MYSQL_BACKUP_USER: backup user
 #  - MYSQL_MASTER_SERVER: change master on this location on the intended slave
 #  - MYSQL_MASTER_PORT: optional, by default 3306
 #  - MYSQL_MASTER_ROOT_PASS: the root password for the master server
@@ -69,6 +70,22 @@ if [ ! -d "$DATADIR/mysql" -a "${1%_safe}" = 'mysqld' ]; then
 		fi
 	fi
 
+	# 
+	# A local-only backup user to be used by
+	# backup tools 
+	# eg. mysqlbackup -u${MYSQL_BACKUP_USER} --backup-dir /backup --with-timestamp backup-and-apply-log
+	# 
+	if [ "$MYSQL_BACKUP_USER" ]; then
+		cat >> "$tempSqlFile" <<-EOSQL
+			GRANT RELOAD ON *.* TO '${MYSQL_BACKUP_USER}'@'localhost';
+			GRANT CREATE, INSERT, DROP, UPDATE ON mysql.backup_progress TO '${MYSQL_BACKUP_USER}'@'localhost';
+			GRANT CREATE, INSERT, SELECT, DROP, UPDATE ON mysql.backup_history TO '${MYSQL_BACKUP_USER}'@'localhost';
+			GRANT REPLICATION CLIENT ON *.* TO '${MYSQL_BACKUP_USER}'@'localhost';
+			GRANT SUPER ON *.* TO '${MYSQL_BACKUP_USER}'@'localhost';
+			FLUSH PRIVILEGES; 
+		EOSQL
+	fi
+
 	#
 	# A replication user (actually created on both master and slaves)
 	#
@@ -77,10 +94,12 @@ if [ ! -d "$DATADIR/mysql" -a "${1%_safe}" = 'mysqld' ]; then
                         echo >&2 'error: MYSQL_REPLICA_USER set, but MYSQL_REPLICA_PASS not set'
                         exit 1
                 fi
-                echo "CREATE USER '$MYSQL_REPLICA_USER'@'%' IDENTIFIED BY '$MYSQL_REPLICA_PASS'; " >> "$tempSqlFile"
-                echo "GRANT REPLICATION SLAVE ON *.* TO '$MYSQL_REPLICA_USER'@'%'; " >> "$tempSqlFile"
                 # REPLICATION CLIENT privileges are required to get master position
-                echo "GRANT REPLICATION CLIENT ON *.* TO '$MYSQL_REPLICA_USER'@'%'; " >> "$tempSqlFile"
+		cat >> "$tempSqlFile" <<-EOSQL
+                	CREATE USER '$MYSQL_REPLICA_USER'@'%' IDENTIFIED BY '$MYSQL_REPLICA_PASS'; 
+                	GRANT REPLICATION SLAVE ON *.* TO '$MYSQL_REPLICA_USER'@'%';
+                	GRANT REPLICATION CLIENT ON *.* TO '$MYSQL_REPLICA_USER'@'%'; 
+		EOSQL
         fi
 
 	#

@@ -4,7 +4,7 @@ RUN yum -y install http://mirrors.mit.edu/epel/7/x86_64/e/epel-release-7-5.noarc
 RUN yum -y install --nogpgcheck http://dev.mysql.com/get/mysql-community-release-el7-5.noarch.rpm
 
 # Update
-RUN yum -y distro-sync
+#RUN yum -y distro-sync
 RUN yum -y install --nogpgcheck  yum-utils \
 	supervisor \
 	hostname \
@@ -26,9 +26,10 @@ RUN useradd backup -d /backup -g mysql
 RUN chown -R mysql:mysql /var/lib/mysql
 RUN chown -R backup:mysql /backup
 
-ADD ./docker-entrypoint.sh /entrypoint.sh
+COPY ./my.cnf /etc/
+COPY ./docker-entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
-ADD ./Dockerfile /Dockerfile
+COPY ./Dockerfile /Dockerfile
 
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT [ "/entrypoint.sh" ]
 
