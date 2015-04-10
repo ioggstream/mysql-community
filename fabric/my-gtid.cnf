@@ -1,0 +1,51 @@
+#
+# A set of default configurations for this image
+#
+[mysql]
+socket=/var/lib/mysql/mysql.sock
+
+[mysqlbackup]
+user=mysqlbackup
+backup_dir=/backup/full
+incremental_backup_dir=/backup/incremental
+with_timestamp
+socket=/var/lib/mysql/mysql.sock
+
+[mysqld]
+# Suggested values for security and consistency
+explicit_defaults_for_timestamp
+local-infile=0
+
+# Use GTID
+gtid-mode=ON
+enforce-gtid-consistency 
+log-slave-updates
+
+# and crash-safe replication
+relay-log-recovery=1
+relay-log=relay-bin
+master-info-repository=TABLE
+relay-log-info-repository=TABLE
+
+
+# Be as consistent as possible
+innodb-flush-log-at-trx-commit=1   
+myisam-recover-options=FORCE,BACKUP
+innodb_log_file_size=5M
+
+## Options for slave replication
+#slave-net-timeout=60
+#read-only
+
+# Monitor slow queries
+slow-query-log=1
+slow-query-log-file=slow-query.log
+long-query-time=2
+
+# Additional features
+event-scheduler=1
+
+# Monitoring and Replication facilities
+#report-host=%%hostname%%.docker
+
+

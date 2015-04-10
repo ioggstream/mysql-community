@@ -1,0 +1,65 @@
+##
+# Valid environment variables
+#MYSQL_ROOT_PASSWORD
+#MYSQL_BACKUP_USER MYSQL_BACKUP_PASS
+#MYSQL_DATABASE
+#MYSQL_USER MYSQL_PASSWORD
+#MYSQL_MASTER_SERVER MYSQL_MASTER_PORT MYSQL_REPLICA_USER MYSQL_REPLICA_PASS
+#MYSQL_MASTER_WAIT_TIME
+#MYSQL_MASTER_ROOT_PASS MYSQL_SETUP_WAIT_TIME
+
+#
+# Run a master and a slave server with GTID enabled
+# 
+fabric:
+  image: mysql-enterprise:v0
+  hostname: fabric
+  environment:
+    - MYSQL_ROOT_PASSWORD=root
+    - MYSQL_REPLICA_USER=repl
+    - MYSQL_REPLICA_PASS=repl
+    - MYSQL_USER=fabric
+    - MYSQL_PASS=fabric
+    - MYSQL_DATABASE=sample
+  entrypoint: /code/docker-entrypoint.sh
+  links:
+    - master
+    - slave
+  volumes:
+    - ./:/code
+  command: ['mysqld', '--defaults-file=/code/my-audit.cnf', '--server-id=300%%id%%', '--binlog-format=row', '--log-bin=%%hostname%%-bin', '--relay-log=%%hostname%%-relay-bin', '--log-slave-updates', '--relay-log-recovery=1', '--master-info-repository=TABLE', '--relay-log-info-repository=TABLE', '--gtid-mode=ON', '--enforce-gtid-consistency', '--innodb-buffer-pool-size=10M', '--report-host=%%hostname%%.docker', '--explicit-defaults-for-timestamp']
+  
+
+master:
+  image: mysql-enterprise:v0
+  hostname: m
+  environment:
+    - MYSQL_ROOT_PASSWORD=root
+    - MYSQL_REPLICA_USER=repl
+    - MYSQL_REPLICA_PASS=repl
+    - MYSQL_USER=fabric
+    - MYSQL_PASS=fabric
+    - MYSQL_DATABASE=sample
+  entrypoint: /code/docker-entrypoint.sh
+  volumes:
+    - ./:/code
+  command: ['mysqld', '--defaults-file=/code/my-gtid.cnf', '--server-id=100%%id%%', '--binlog-format=row', '--log-bin=%%hostname%%-bin', '--relay-log=%%hostname%%-relay-bin', '--log-slave-updates', '--relay-log-recovery=1', '--master-info-repository=TABLE', '--relay-log-info-repository=TABLE', '--gtid-mode=ON', '--enforce-gtid-consistency', '--innodb-buffer-pool-size=10M', '--report-host=%%hostname%%.docker', '--explicit-defaults-for-timestamp']
+  
+  
+slave:
+  image: mysql-enterprise:v0
+  hostname: s-%%id%%
+  environment:
+    - MYSQL_ROOT_PASSWORD=root
+    - MYSQL_REPLICA_USER=repl
+    - MYSQL_REPLICA_PASS=repl
+    - MYSQL_USER=fabric
+    - MYSQL_PASS=fabric
+    - MYSQL_DATABASE=sample
+  entrypoint: /code/docker-entrypoint.sh
+  links:
+    - master
+  volumes:
+    - ./:/code
+  command: ['mysqld', '--defaults-file=/code/my-gtid.cnf', '--server-id=200%%id%%', '--binlog-format=row', '--log-bin=%%hostname%%-bin', '--relay-log=%%hostname%%-relay-bin', '--log-slave-updates', '--relay-log-recovery=1', '--master-info-repository=TABLE', '--relay-log-info-repository=TABLE', '--gtid-mode=ON', '--enforce-gtid-consistency', '--innodb-buffer-pool-size=10M', '--report-host=%%hostname%%.docker', '--explicit-defaults-for-timestamp', '--slave-skip-error=1396']
+
