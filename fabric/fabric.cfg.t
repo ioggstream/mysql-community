@@ -1,3 +1,6 @@
+#
+# Fabric Training File
+#
 [DEFAULT]
 prefix = 
 sysconfdir = /etc

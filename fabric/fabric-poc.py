@@ -1,16 +1,19 @@
 from __future__ import print_function
+from os.path import isfile
 import mysql.connector
 from mysql.connector import fabric
 
 fabric_user = dict(user="fabric", password="fabric")
 admin_user= dict(user="admin", password="password")
-root = dict(user='root', password='root')
-
+root_user = dict(user='root', password='root')
+hosts = "fabric.docker m.docker s-1.docker s-2.docker s-3.docker".split()
 
 def f_create_fabric_user(hosts):
+    """ Provision fabric user wit @@SESSION.SQL_LOG_BIN=0.
+    """ 
     for h in hosts:
         try:
-            c = mysql.connector.connect(host=h, **root)
+            c = mysql.connector.connect(host=h, **root_user)
         except:
             print("cannot connect to ", h)
             continue
@@ -68,7 +71,7 @@ def fabric_setup():
     cred.update(admin_user)
     conn = mysql.connector.connect(fabric=cred, autocommit=True, database='sample', **fabric_user
     )   
-    conn.set_property(mode=fabric.MODE_READWRITE, group="group_id-1")
+    conn.set_property(mode=fabric.MODE_READWRITE, group="ha")
     cur = conn.cursor()
     cur.execute(
     "CREATE TABLE IF NOT EXISTS subscribers ("
@@ -95,23 +98,42 @@ def test_fabric():
             print(e)
     
 
-def test_fabric_node():
+def test_fabric_cfg():
+    assert isfile("/etc/mysql/fabric.cfg")
+
+    assert 'Fabric Training File' in open("/etc/mysql/fabric.cfg").read()
+
+
+def test_fabric_log():
+    # This test will succeed after the 
+    #  fabric startup with
+    #  mysqlfabric manage start [--daemon]
+    assert isfile("/var/log/fabric.log")
+
+
+def test_fabric_user_and_database():
+    # This test will succeed *after* the
+    #  mysqlfabric manage setup, which will
+    #  provision the database
     c = mysql.connector.connect(host='localhost', 
                                 database='fabric',
                                 **fabric_user)
 
 
-def test_access_nodes():
-    def test_node(h):
-        c = mysql.connector.connect(host=h, **fabric_user)
-        cur = c.cursor()
-        cur.execute("select user,host from mysql.user;")
-        for x in cur:
-            pass
-        cur.close()
-        c.close()
+def connect_node(h, myuser):
+    c = mysql.connector.connect(host=h, **myuser)
+    cur = c.cursor()
+    cur.execute("select user,host from mysql.user;")
+    for x in cur:
+        pass
+    cur.close()
+    c.close()
 
+def test_access_nodes_with_fabric_user():
     for h in hosts:
-        yield test_node, h
+        yield connect_node, h, fabric_user
             
  
+def test_access_nodes_with_root_user():
+    for h in hosts:
+        yield connect_node, h, root_user 
