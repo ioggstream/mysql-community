@@ -22,7 +22,7 @@ password = {fabric_password}
 unreachable_timeout = 5
 
 [protocol.xmlrpc]
-address = localhost:32274
+address = {xmlrpc_host}:{xmlrpc_port}
 threads = 5
 user = admin
 password = {admin_password}
