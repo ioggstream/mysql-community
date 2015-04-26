@@ -2,15 +2,26 @@ from __future__ import print_function
 from os.path import isfile
 import mysql.connector
 from mysql.connector import fabric
+from nose.tools import *
+from nose import SkipTest
+from mysql.connector.errors import *
+
+GROUP = "ha"
+
+FABRIC_LOG = "/var/log/fabric.log"
+FABRIC_CFG = '/etc/mysql/fabric.cfg'
+hosts = "fabric.docker m.docker s-1.docker s-2.docker s-3.docker".split()
 
 fabric_user = dict(user="fabric", password="fabric")
-admin_user= dict(user="admin", password="password")
+admin_user = dict(user="admin", password="password")
 root_user = dict(user='root', password='root')
-hosts = "fabric.docker m.docker s-1.docker s-2.docker s-3.docker".split()
+xmlrpc_endpoint = dict(host="localhost", port=32274)
+xmlrpc_endpoint.update(admin_user)
+
 
 def f_create_fabric_user(hosts):
     """ Provision fabric user wit @@SESSION.SQL_LOG_BIN=0.
-    """ 
+    """
     for h in hosts:
         try:
             c = mysql.connector.connect(host=h, **root_user)
@@ -21,7 +32,7 @@ def f_create_fabric_user(hosts):
         # If you specify only the user name part of the account name, a host name part of '%' is used.
         cur.execute("SET @@SESSION.SQL_LOG_BIN=0;")
         try:
-            cur.execute("create user fabric identified by 'fabric';")
+            cur.execute("create user {user} identified by '{password}';".format(**fabric_user))
         except mysql.connector.errors.DatabaseError:
             pass
         cur.execute("grant all on *.* to {user}@'%' identified by '{password}';".format(**fabric_user))
@@ -31,24 +42,28 @@ def f_create_fabric_user(hosts):
 
 
 def f_configure_fabric():
+    """
+    Create /etc/mysql/fabric.cfg using the given template
+    :return:
+    """
     fabric_cfg = open('fabric.cfg.t').read()
     fabric_cfg = fabric_cfg.format(
-                fabric_password=fabric_user['password'],
-                admin_password=admin_user['password']
-                )
-    with open('/etc/mysql/fabric.cfg', 'wb') as fh:
+        xmlrpc_host=xmlrpc_endpoint['host'],
+        xmlrpc_port=xmlrpc_endpoint['port'],
+        fabric_password=fabric_user['password'],
+        admin_password=admin_user['password']
+    )
+    with open(FABRIC_CFG, 'wb') as fh:
         fh.write(fabric_cfg.encode('ascii'))
 
 
-           
-            
 if __name__ == '__main__':
-    dt = { k:v 
-            for k,v in globals().items() 
-            if (v.__class__.__name__ == 'function'
-            and k.startswith('f_'))
-            }
+    dt = {k: v
+          for k, v in globals().items()
+          if (v.__class__.__name__ == 'function') and k.startswith('f_')
+          }
     from sys import argv
+
     action = argv[1]
     if action == 'setup':
         hosts = argv[2:]
@@ -65,26 +80,50 @@ if __name__ == '__main__':
 
 from nose.tools import with_setup
 
-def fabric_setup():    
-    cred = {"host" : "localhost",
-                "port" : 32274}
-    cred.update(admin_user)
-    conn = mysql.connector.connect(fabric=cred, autocommit=True, database='sample', **fabric_user
-    )   
-    conn.set_property(mode=fabric.MODE_READWRITE, group="ha")
-    cur = conn.cursor()
+
+def get_fabric_cursor(mode):
+    conn_rw = mysql.connector.connect(fabric=xmlrpc_endpoint, autocommit=True, database='sample', **fabric_user)
+    conn_rw.set_property(mode=mode, group=GROUP)
+    cur = conn_rw.cursor()
+    return conn_rw, cur
+
+
+def fabric_setup():
+    conn, cur = get_fabric_cursor(fabric.MODE_READWRITE)
     cur.execute(
-    "CREATE TABLE IF NOT EXISTS subscribers ("
-    "   sub_no INT, "
-    "   first_name CHAR(40), "
-    "   last_name CHAR(40)"
-    ")"
-    ) 
+        "CREATE TABLE IF NOT EXISTS subscribers ("
+        "   sub_no INT, "
+        "   first_name CHAR(40), "
+        "   last_name CHAR(40)"
+        ")"
+    )
+
+
+def test_target_host():
+
+    def connect(mode):
+        """
+        Connect to a Group via Fabric.
+        :param mode: fabric.MODE_READONLY or fabric.MODE_READWRITE
+        :return:
+        """
+        conn_rw, cur = get_fabric_cursor(mode)
+        cur.execute("SELECT @@hostname;")
+        for x in cur:
+            print(x)
+        cur.close()
+        conn_rw.close()
+
+    for m in (fabric.MODE_READWRITE, fabric.MODE_READONLY):
+        for i in range(10):
+            yield connect, m
 
 
 @with_setup(fabric_setup)
 def test_fabric():
-    for h in 'm.docker s-1.docker'.split():
+    for h in hosts:
+        if h.startswith(('localhost', 'fabric')):
+            continue
         try:
             print("host", h)
             c = mysql.connector.connect(host=h, database='sample', **fabric_user)
@@ -96,32 +135,39 @@ def test_fabric():
             c.close()
         except Exception as e:
             print(e)
-    
+
 
 def test_fabric_cfg():
-    assert isfile("/etc/mysql/fabric.cfg")
+    assert isfile(FABRIC_CFG)
 
-    assert 'Fabric Training File' in open("/etc/mysql/fabric.cfg").read()
+    assert 'Fabric Training File' in open(FABRIC_CFG).read()
 
 
 def test_fabric_log():
     # This test will succeed after the 
-    #  fabric startup with
+    # fabric startup with
     #  mysqlfabric manage start [--daemon]
-    assert isfile("/var/log/fabric.log")
+    assert isfile(FABRIC_LOG)
 
 
 def test_fabric_user_and_database():
     # This test will succeed *after* the
-    #  mysqlfabric manage setup, which will
+    # mysqlfabric manage setup, which will
     #  provision the database
-    c = mysql.connector.connect(host='localhost', 
-                                database='fabric',
-                                **fabric_user)
+    try:
+        c = mysql.connector.connect(
+            host='localhost',
+            database='fabric',
+            **fabric_user)
+    except InterfaceError:
+        raise SkipTest()
 
 
 def connect_node(h, myuser):
-    c = mysql.connector.connect(host=h, **myuser)
+    try:
+        c = mysql.connector.connect(host=h, **myuser)
+    except InterfaceError:
+        raise SkipTest()
     cur = c.cursor()
     cur.execute("select user,host from mysql.user;")
     for x in cur:
@@ -129,11 +175,13 @@ def connect_node(h, myuser):
     cur.close()
     c.close()
 
+
 def test_access_nodes_with_fabric_user():
     for h in hosts:
         yield connect_node, h, fabric_user
-            
- 
+
+
 def test_access_nodes_with_root_user():
     for h in hosts:
         yield connect_node, h, root_user 
+
