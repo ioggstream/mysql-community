@@ -1,3 +1,4 @@
+
 from __future__ import print_function
 from os.path import isfile
 import mysql.connector
@@ -82,6 +83,11 @@ from nose.tools import with_setup
 
 
 def get_fabric_cursor(mode):
+    """
+    Create a connection via Fabric
+    :param mode:
+    :return:
+    """
     conn_rw = mysql.connector.connect(fabric=xmlrpc_endpoint, autocommit=True, database='sample', **fabric_user)
     conn_rw.set_property(mode=mode, group=GROUP)
     cur = conn_rw.cursor()
@@ -185,3 +191,80 @@ def test_access_nodes_with_root_user():
     for h in hosts:
         yield connect_node, h, root_user 
 
+
+
+def add_employee(conn, emp_no, first_name, last_name):
+    conn.set_property(group=GROUP, mode=fabric.MODE_READWRITE)
+    cur = conn.cursor()
+    cur.execute("USE employees")
+    cur.execute(
+        "INSERT INTO employees VALUES (%s, %s, %s)",
+        (emp_no, first_name, last_name)
+    )
+    # We need to keep track of what we have executed in order to,
+    # at least, read our own updates from a slave.
+    cur.execute("SELECT @@global.gtid_executed")
+    for row in cur:
+        print ("Transactions executed on the master", row[0])
+        return row[0]
+
+
+def synchronize(cur, gtid_executed):
+    """
+    Wait until a given transaction is replicated.
+
+    :param cur:
+    :param gtid_executed:
+    :return:
+    """
+    # Guarantee that a slave has applied our own updates before
+    # reading anything.
+    cur.execute(
+        "SELECT WAIT_UNTIL_SQL_THREAD_AFTER_GTIDS('%s', 0)" %
+        (gtid_executed, )
+    )
+    for row in cur:
+        print ("Had to synchronize", row, "transactions.")
+
+
+def find_employee(conn, emp_no, gtid_executed):
+    """
+    Issue a SELECT after waiting for gtid_executed
+
+    :param conn:
+    :param emp_no:
+    :param gtid_executed:
+    :return:
+    """
+    conn.set_property(group=GROUP, mode=fabric.MODE_READONLY)
+    cur = conn.cursor()
+    synchronize(cur, gtid_executed)
+
+    cur.execute("USE employees")
+    cur.execute(
+        "SELECT first_name, last_name FROM employees "
+        "WHERE emp_no = %s", (emp_no, )
+    )
+    for row in cur:
+        print ("Retrieved", row)
+
+
+def test_fabric_query():
+    #
+    # Test against a replicated
+    #
+    # Address of the Fabric, not the host we are going to connect to.
+    conn, cur = get_fabric_cursor(fabric.MODE_READWRITE)
+    cur.execute("CREATE DATABASE IF NOT EXISTS employees")
+    cur.execute("USE employees")
+    cur.execute("DROP TABLE IF EXISTS employees")
+    cur.execute(
+        "CREATE TABLE employees ("
+        "   emp_no INT, "
+        "   first_name CHAR(40), "
+        "   last_name CHAR(40)"
+        ")"
+    )
+    # Here I have to 
+    gtid_executed = add_employee(conn, 12, "John", "Doe")
+    find_employee(conn, 12, gtid_executed)
