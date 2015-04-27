@@ -6,6 +6,10 @@ from mysql.connector import fabric
 from nose.tools import *
 from nose import SkipTest
 from mysql.connector.errors import *
+from time import sleep
+import logging
+log = logging.getLogger(__name__)
+logging.basicConfig(level='DEBUG')
 
 GROUP = "ha"
 
@@ -105,24 +109,34 @@ def fabric_setup():
     )
 
 
-def test_target_host():
+def connect(mode):
+    """
+    Connect to a Group via Fabric.
+    :param mode: fabric.MODE_READONLY or fabric.MODE_READWRITE
+    :return:
+    """
+    conn_rw, cur = get_fabric_cursor(mode)
+    cur.execute("SELECT @@hostname;")
+    for x in cur:
+        log.info("hostname connected in mode %s to %s", mode, x)
+    cur.close()
+    conn_rw.close()
 
-    def connect(mode):
-        """
-        Connect to a Group via Fabric.
-        :param mode: fabric.MODE_READONLY or fabric.MODE_READWRITE
-        :return:
-        """
-        conn_rw, cur = get_fabric_cursor(mode)
-        cur.execute("SELECT @@hostname;")
-        for x in cur:
-            print(x)
-        cur.close()
-        conn_rw.close()
+
+def test_target_host():
 
     for m in (fabric.MODE_READWRITE, fabric.MODE_READONLY):
         for i in range(10):
             yield connect, m
+
+
+def test_failover_host():
+    for i in range(100):
+        for m in (fabric.MODE_READWRITE, fabric.MODE_READONLY):
+            yield connect, m
+            sleep(1)
+
+
 
 
 @with_setup(fabric_setup)
