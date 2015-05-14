@@ -1,0 +1,5 @@
+mysql:
+  image: mysql:ubuntu-v2
+  volumes:
+    - ./:/code
+  command: tail -f /var/log/dpkg.log
