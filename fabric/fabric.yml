@@ -12,7 +12,7 @@
 # Run a master and a slave server with GTID enabled
 # 
 fabric:
-  image: mysql-enterprise:v0
+  image: ioggstream/mysql-community
   hostname: fabric
   environment:
     - MYSQL_ROOT_PASSWORD=root
@@ -27,11 +27,13 @@ fabric:
     - slave
   volumes:
     - ./:/code
-  command: ['mysqld', '--defaults-file=/code/my-audit.cnf', '--server-id=300%%id%%', '--binlog-format=row', '--log-bin=%%hostname%%-bin', '--relay-log=%%hostname%%-relay-bin', '--log-slave-updates', '--relay-log-recovery=1', '--master-info-repository=TABLE', '--relay-log-info-repository=TABLE', '--gtid-mode=ON', '--enforce-gtid-consistency', '--innodb-buffer-pool-size=10M', '--report-host=%%hostname%%.docker', '--explicit-defaults-for-timestamp']
+  command: ['mysqld', '--defaults-file=/code/my-gtid.cnf', '--server-id=300%%id%%', '--binlog-format=row',
+   '--log-bin=%%hostname%%-bin', '--relay-log=%%hostname%%-relay-bin',
+   '--innodb-buffer-pool-size=10M', '--report-host=%%hostname%%.docker', '--explicit-defaults-for-timestamp']
   
 
 master:
-  image: mysql-enterprise:v0
+  image: ioggstream/mysql-community
   hostname: m
   environment:
     - MYSQL_ROOT_PASSWORD=root
@@ -43,11 +45,14 @@ master:
   entrypoint: /code/docker-entrypoint.sh
   volumes:
     - ./:/code
-  command: ['mysqld', '--defaults-file=/code/my-gtid.cnf', '--server-id=100%%id%%', '--binlog-format=row', '--log-bin=%%hostname%%-bin', '--relay-log=%%hostname%%-relay-bin', '--log-slave-updates', '--relay-log-recovery=1', '--master-info-repository=TABLE', '--relay-log-info-repository=TABLE', '--gtid-mode=ON', '--enforce-gtid-consistency', '--innodb-buffer-pool-size=10M', '--report-host=%%hostname%%.docker', '--explicit-defaults-for-timestamp']
+  command: ['mysqld', '--defaults-file=/code/my-gtid.cnf', '--server-id=100%%id%%', '--binlog-format=row',
+    '--log-bin=%%hostname%%-bin', '--relay-log=%%hostname%%-relay-bin',
+    '--innodb-buffer-pool-size=10M', '--report-host=%%hostname%%.docker',
+    ]
   
   
 slave:
-  image: mysql-enterprise:v0
+  image: ioggstream/mysql-community
   hostname: s-%%id%%
   environment:
     - MYSQL_ROOT_PASSWORD=root
@@ -61,5 +66,7 @@ slave:
     - master
   volumes:
     - ./:/code
-  command: ['mysqld', '--defaults-file=/code/my-gtid.cnf', '--server-id=200%%id%%', '--binlog-format=row', '--log-bin=%%hostname%%-bin', '--relay-log=%%hostname%%-relay-bin', '--log-slave-updates', '--relay-log-recovery=1', '--master-info-repository=TABLE', '--relay-log-info-repository=TABLE', '--gtid-mode=ON', '--enforce-gtid-consistency', '--innodb-buffer-pool-size=10M', '--report-host=%%hostname%%.docker', '--explicit-defaults-for-timestamp', '--slave-skip-error=1396']
+  command: ['mysqld', '--defaults-file=/code/my-gtid.cnf', '--server-id=200%%id%%', '--binlog-format=row',
+    '--log-bin=%%hostname%%-bin', '--relay-log=%%hostname%%-relay-bin',
+    '--innodb-buffer-pool-size=10M', '--report-host=%%hostname%%.docker']
 

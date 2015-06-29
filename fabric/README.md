@@ -9,6 +9,9 @@ This directory contains tools to setup a fabric POC
 
 IMPORTANT: if you can't resolve containers' hostnames you should take care
             of setting IPs instead of hostnames
+            
+        #docker inspect -f '{{.Name}} {{.NetworkSettings.IPAddress}}' $(docker ps -q)
+
 
 ## The POC
 
@@ -42,9 +45,11 @@ Let's add a new node simulating that not enough binlogs are present
     #mysql -uroot -proot -h m.docker -e 'purge logs;'
 
 Now provision a new node via docker-compose:
+
     #docker-compose scale slave=3
 
 And clone the master databases on the new node.
+
     #mysqlfabric server clone ha s-4.docker 
     #mysqlfabric group add ha s-4.docker:3306 
 

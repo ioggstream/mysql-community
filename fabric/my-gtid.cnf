@@ -4,6 +4,7 @@
 [mysql]
 socket=/var/lib/mysql/mysql.sock
 
+
 [mysqlbackup]
 user=mysqlbackup
 backup_dir=/backup/full
@@ -11,15 +12,26 @@ incremental_backup_dir=/backup/incremental
 with_timestamp
 socket=/var/lib/mysql/mysql.sock
 
+
+[mysql]
+user=root
+password=root
+show-warnings
+
+
 [mysqld]
 # Suggested values for security and consistency
 explicit_defaults_for_timestamp
 local-infile=0
 
+# Avoid messing with dns
+skip-name-resolve
+
 # Use GTID
 gtid-mode=ON
 enforce-gtid-consistency 
 log-slave-updates
+log-bin
 
 # and crash-safe replication
 relay-log-recovery=1
@@ -30,8 +42,9 @@ relay-log-info-repository=TABLE
 
 # Be as consistent as possible
 innodb-flush-log-at-trx-commit=1   
-myisam-recover-options=FORCE,BACKUP
 innodb_log_file_size=5M
+innodb-fast-shutdown=0
+myisam-recover-options=FORCE,BACKUP
 
 ## Options for slave replication
 #slave-net-timeout=60

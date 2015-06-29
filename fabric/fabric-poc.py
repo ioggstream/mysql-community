@@ -1,10 +1,19 @@
+"""
+    Code for mysql-fabric:
+        - configure
+        - setup
+        - test servers
+        - test replication
+        - test fabric access (rw split)
+        - test shards (wip)
 
+    Many functions are freely inspired by MySQL Fabric Tutorials
+    http://dev.mysql.com/doc/mysql-utilities/1.5/en
+"""
 from __future__ import print_function
 from os.path import isfile
 import mysql.connector
 from mysql.connector import fabric
-from nose.tools import *
-from nose import SkipTest
 from mysql.connector.errors import *
 from time import sleep
 import logging
@@ -84,7 +93,8 @@ if __name__ == '__main__':
     exit(0)
 
 from nose.tools import with_setup
-
+from nose.tools import *
+from nose import SkipTest
 
 def get_fabric_cursor(mode):
     """
@@ -206,10 +216,24 @@ def test_access_nodes_with_root_user():
         yield connect_node, h, root_user 
 
 
+def add_employee(conn, emp_no, first_name, last_name, gtid_executed=None):
+    """
+    Wait for gtid_executed and INSERT an employee.
 
-def add_employee(conn, emp_no, first_name, last_name):
+    :param conn:
+    :param emp_no:
+    :param first_name:
+    :param last_name:
+    :param gtid_executed:
+    :return:
+    """
     conn.set_property(group=GROUP, mode=fabric.MODE_READWRITE)
     cur = conn.cursor()
+
+    # Wait for gtid_executed.
+    if gtid_executed:
+        synchronize(cur, gtid_executed)
+
     cur.execute("USE employees")
     cur.execute(
         "INSERT INTO employees VALUES (%s, %s, %s)",
@@ -221,6 +245,23 @@ def add_employee(conn, emp_no, first_name, last_name):
     for row in cur:
         print ("Transactions executed on the master", row[0])
         return row[0]
+
+
+
+def prepare_synchronization(cur):
+    """
+    Get the last executed transaction.
+
+    :param cur:
+    :return:
+    """
+    # We need to keep track of what we have executed so far to guarantee
+    # that the employees.employees table exists at all shards.
+    gtid_executed = None
+    cur.execute("SELECT @@global.gtid_executed")
+    for row in cur:
+        gtid_executed = row[0]
+    return gtid_executed
 
 
 def synchronize(cur, gtid_executed):
@@ -279,6 +320,8 @@ def test_fabric_query():
         "   last_name CHAR(40)"
         ")"
     )
-    # Here I have to 
-    gtid_executed = add_employee(conn, 12, "John", "Doe")
+    # Wait for the last executed transaction
+    gtid_executed = prepare_synchronization(cur)
+
+    gtid_executed = add_employee(conn, 12, "John", "Doe", gtid_executed)
     find_employee(conn, 12, gtid_executed)
