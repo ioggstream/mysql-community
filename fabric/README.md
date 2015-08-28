@@ -19,11 +19,13 @@ Create 4 database hosts:
 
     #export COMPOSE_FILE=fabric.yml
     #docker-compose scale master=1 slave=2 fabric=1
-    #docker exec fabric python /code/fabric-poc.py m.docker s-1.docker s-2.docker
+    #docker exec fabric python /code/fabric-poc.py setup localhost m.docker s-1.docker s-2.docker
     #docker exec -ti fabric /bin/bash
 
 
     mysqlfabric manage setup --param=storage.user=fabric
+    mysqlfabric manage start --daemonize
+
     mysqlfabric manage ping
 
 Create the "ha" group and add a master and a slave.

@@ -60,7 +60,7 @@ def f_configure_fabric():
     Create /etc/mysql/fabric.cfg using the given template
     :return:
     """
-    fabric_cfg = open('fabric.cfg.t').read()
+    fabric_cfg = open('/code/fabric.cfg.t').read()
     fabric_cfg = fabric_cfg.format(
         xmlrpc_host=xmlrpc_endpoint['host'],
         xmlrpc_port=xmlrpc_endpoint['port'],

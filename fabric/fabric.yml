@@ -9,8 +9,9 @@
 #MYSQL_MASTER_ROOT_PASS MYSQL_SETUP_WAIT_TIME
 
 #
-# Run a master and a slave server with GTID enabled
-# 
+# Run a master and a slave server with GTID enabled:
+#  - expose local mysql-utilities code;
+#  - expose docker socket to fabric (not for swarm);
 fabric:
   image: ioggstream/mysql-community
   hostname: fabric
@@ -22,14 +23,11 @@ fabric:
     - MYSQL_PASS=fabric
     - MYSQL_DATABASE=sample
   entrypoint: /code/docker-entrypoint.sh
-  links:
-    - master
-    - slave
   volumes:
     - ./:/code
-  command: ['mysqld', '--defaults-file=/code/my-gtid.cnf', '--server-id=300%%id%%', '--binlog-format=row',
-   '--log-bin=%%hostname%%-bin', '--relay-log=%%hostname%%-relay-bin',
-   '--innodb-buffer-pool-size=10M', '--report-host=%%hostname%%.docker', '--explicit-defaults-for-timestamp']
+    - /var/run/docker.sock:/var/run/docker.sock
+  command: ['mysqld', '--defaults-file=/code/my-gtid.cnf',  '--binlog-format=row',
+   '--innodb-buffer-pool-size=10M', '--explicit-defaults-for-timestamp']
   
 
 master:
@@ -45,15 +43,13 @@ master:
   entrypoint: /code/docker-entrypoint.sh
   volumes:
     - ./:/code
-  command: ['mysqld', '--defaults-file=/code/my-gtid.cnf', '--server-id=100%%id%%', '--binlog-format=row',
-    '--log-bin=%%hostname%%-bin', '--relay-log=%%hostname%%-relay-bin',
-    '--innodb-buffer-pool-size=10M', '--report-host=%%hostname%%.docker',
+  command: ['mysqld', '--defaults-file=/code/my-gtid.cnf',  '--binlog-format=row',
+    '--innodb-buffer-pool-size=10M',
     ]
   
   
 slave:
   image: ioggstream/mysql-community
-  hostname: s-%%id%%
   environment:
     - MYSQL_ROOT_PASSWORD=root
     - MYSQL_REPLICA_USER=repl
@@ -66,7 +62,6 @@ slave:
     - master
   volumes:
     - ./:/code
-  command: ['mysqld', '--defaults-file=/code/my-gtid.cnf', '--server-id=200%%id%%', '--binlog-format=row',
-    '--log-bin=%%hostname%%-bin', '--relay-log=%%hostname%%-relay-bin',
-    '--innodb-buffer-pool-size=10M', '--report-host=%%hostname%%.docker']
+  command: ['mysqld', '--defaults-file=/code/my-gtid.cnf',  '--binlog-format=row',
+    '--innodb-buffer-pool-size=10M']
 

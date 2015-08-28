@@ -34,6 +34,11 @@ get_last_octet_from_ip(){
 	echo ${ip//*./}
 }
 
+get_ip(){
+	local ip=$(ip r l scope link)
+	echo ${ip//*src /}
+}
+
 # TODO read this from the MySQL config?
 DATADIR='/var/lib/mysql'
 
@@ -160,5 +165,5 @@ if [ "$MYSQL_MASTER_ROOT_PASS" ]; then
 	disown
 fi
 
-exec "$@" --user=mysql --server-id=$(get_last_octet_from_ip) --log-bin=$(hostname)-bin
+exec "$@" --user=mysql --server-id=$(get_last_octet_from_ip) --log-bin=$(hostname)-bin --report-host=$(get_ip) --relay-log=$(hostname)-relay
 
