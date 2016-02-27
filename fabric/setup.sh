@@ -1,25 +1,9 @@
-# Files for Fabric POC
-
-This directory contains tools to setup a fabric POC
-
-    - fabric.yml: docker-compose file to setup 3+ mysql nodes
-    - fabric-poc.py: script to configure fabric nodes
-    - fabric.cfg.t: fabric template used by fabric-poc.py
-    - my-gtid.cnf: fabric requires GTID configuration
-
-IMPORTANT: if you can't resolve containers' hostnames you should take care
-            of setting IPs instead of hostnames
-            
-        #docker inspect -f '{{.Name}} {{.NetworkSettings.IPAddress}}' $(docker ps -q)
-
-
-## The POC
-
-Create 4 database hosts:
-
-    #export COMPOSE_FILE=fabric.yml
-    #docker-compose scale fabric=1 mysql=3
-    #docker exec fabric python /code/fabric-poc.py setup localhost mysql_{1..3}
+    PREFIX=$(basename $PWD)
+    export COMPOSE_FILE=fabric.yml
+    docker-compose scale fabric=1 mysql=3
+    sleep 10
+    
+    docker exec fabric python /code/fabric-poc.py setup localhost ${PREFIX}_mysql_{1..3}
     #docker exec -ti fabric /bin/bash
 
 

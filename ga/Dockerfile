@@ -1,8 +1,7 @@
 FROM centos:7
 # basic repo stuff: EPEL and Oracle MySQL GA
 RUN yum -y install http://mirrors.mit.edu/epel/7/x86_64/e/epel-release-7-5.noarch.rpm
-RUN yum -y install --nogpgcheck http://dev.mysql.com/get/mysql-community-release-el7-5.noarch.rpm
-
+RUN yum -y install --nogpgcheck http://dev.mysql.com/get/mysql57-community-release-el7-7.noarch.rpm
 # Update
 #RUN yum -y distro-sync
 RUN yum -y install --nogpgcheck  yum-utils \
@@ -15,7 +14,8 @@ RUN yum -y install --nogpgcheck  yum-utils \
 RUN yum -y install --nogpgcheck mysql-utilities
 
 # Community
-RUN yum -y install --nogpgcheck mysql-community-* 
+RUN yum -y install --nogpgcheck mysql-community-server \
+	mysql-community-test 
 
 RUN rm /var/lib/mysql/* -fr
 

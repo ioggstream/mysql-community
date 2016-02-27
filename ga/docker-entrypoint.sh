@@ -42,9 +42,9 @@ if [ ! -d "$DATADIR/mysql" -a "${1%_safe}" = 'mysqld' ]; then
 		exit 1
 	fi
 	
-	echo 'Running mysql_install_db ...'
-	mysql_install_db
-	echo 'Finished mysql_install_db'
+	echo 'Running initialize ...'
+	mysqld --defaults-file=/etc/my.cnf --user=mysql --initialize 
+	echo 'Finished initialize'
 	
 	# These statements _must_ be on individual lines, and _must_ end with
 	# semicolons (no line breaks or comments are permitted).

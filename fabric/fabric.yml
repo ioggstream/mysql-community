@@ -11,10 +11,27 @@
 #
 # Run a master and a slave server with GTID enabled:
 #  - expose local mysql-utilities code;
-#  - expose docker socket to fabric (not for swarm);
+#  - expose 3306 to enable the second interface;
+#  - libnetwork overlay may need some pings to spin up 
+#     before host can see each other;
+#  - ensure fabric node can contact swarm server for
+#     provisioning;
+mysql:
+  image: ioggstream/mysql-fabric
+  environment:
+    - MYSQL_ROOT_PASSWORD=root
+    - MYSQL_REPLICA_USER=repl
+    - MYSQL_REPLICA_PASS=repl
+    - MYSQL_USER=fabric
+    - MYSQL_PASS=fabric
+    - MYSQL_DATABASE=sample
+  ports:
+    - 3306
+  command: ['mysqld', '--binlog-format=row', '--innodb-buffer-pool-size=10M' ]
+  
+
 fabric:
-  image: ioggstream/mysql-community
-  hostname: fabric
+  image: ioggstream/mysql-fabric
   environment:
     - MYSQL_ROOT_PASSWORD=root
     - MYSQL_REPLICA_USER=repl
@@ -22,46 +39,7 @@ fabric:
     - MYSQL_USER=fabric
     - MYSQL_PASS=fabric
     - MYSQL_DATABASE=sample
-  entrypoint: /code/docker-entrypoint.sh
-  volumes:
-    - ./:/code
-    - /var/run/docker.sock:/var/run/docker.sock
-  command: ['mysqld', '--defaults-file=/code/my-gtid.cnf',  '--binlog-format=row',
+  ports:
+    - 3306
+  command: ['mysqld', '--binlog-format=row',
    '--innodb-buffer-pool-size=10M', '--explicit-defaults-for-timestamp']
-  
-
-master:
-  image: ioggstream/mysql-community
-  hostname: m
-  environment:
-    - MYSQL_ROOT_PASSWORD=root
-    - MYSQL_REPLICA_USER=repl
-    - MYSQL_REPLICA_PASS=repl
-    - MYSQL_USER=fabric
-    - MYSQL_PASS=fabric
-    - MYSQL_DATABASE=sample
-  entrypoint: /code/docker-entrypoint.sh
-  volumes:
-    - ./:/code
-  command: ['mysqld', '--defaults-file=/code/my-gtid.cnf',  '--binlog-format=row',
-    '--innodb-buffer-pool-size=10M',
-    ]
-  
-  
-slave:
-  image: ioggstream/mysql-community
-  environment:
-    - MYSQL_ROOT_PASSWORD=root
-    - MYSQL_REPLICA_USER=repl
-    - MYSQL_REPLICA_PASS=repl
-    - MYSQL_USER=fabric
-    - MYSQL_PASS=fabric
-    - MYSQL_DATABASE=sample
-  entrypoint: /code/docker-entrypoint.sh
-  links:
-    - master
-  volumes:
-    - ./:/code
-  command: ['mysqld', '--defaults-file=/code/my-gtid.cnf',  '--binlog-format=row',
-    '--innodb-buffer-pool-size=10M']
-

@@ -1,0 +1,76 @@
+##
+# Valid environment variables
+#MYSQL_ROOT_PASSWORD
+#MYSQL_BACKUP_USER MYSQL_BACKUP_PASS
+#MYSQL_DATABASE
+#MYSQL_USER MYSQL_PASSWORD
+#MYSQL_MASTER_SERVER MYSQL_MASTER_PORT MYSQL_REPLICA_USER MYSQL_REPLICA_PASS
+#MYSQL_MASTER_WAIT_TIME
+#MYSQL_MASTER_ROOT_PASS MYSQL_SETUP_WAIT_TIME
+
+#
+# Run a master and a slave server with GTID enabled
+#   - fabric server should provision new containers
+#     via docker.sock
+fabric:
+  image: mysql-fabric:v1
+  hostname: fabric
+  environment:
+    - MYSQL_ROOT_PASSWORD=root
+  volumes:
+    - ./:/code
+    - /var/run/docker.sock:/var/run/docker.sock
+  command: ['mysqld', '--binlog-format=row', '--innodb-buffer-pool-size=10M']
+
+s:
+  image: mysql-fabric:v1
+  environment:
+    - MYSQL_ROOT_PASSWORD=root
+  volumes:
+    - ./:/code
+  entrypoint: /code/docker-entrypoint.sh
+  command: ['mysqld',
+    '--binlog-format=row',
+    '--innodb-buffer-pool-size=10M'
+  ]
+
+
+l:
+  image: mysql-fabric:v1
+  environment:
+    - MYSQL_ROOT_PASSWORD=root
+  volumes:
+    - ./:/code
+  entrypoint: /code/docker-entrypoint.sh
+  command: ['mysqld',
+    '--defaults-file=/code/my-gtid.cnf',
+    '--binlog-format=row',
+    '--innodb-buffer-pool-size=10M'
+  ]
+
+
+s2:
+  image: mysql-fabric:v1
+  environment:
+    - MYSQL_ROOT_PASSWORD=root
+  volumes:
+    - ./:/code
+  entrypoint: /code/docker-entrypoint.sh
+  command: ['mysqld',
+    '--binlog-format=row',
+    '--innodb-buffer-pool-size=10M'
+  ]
+
+
+
+s3:
+  image: mysql-fabric:v1
+  environment:
+    - MYSQL_ROOT_PASSWORD=root
+  volumes:
+    - ./:/code
+  entrypoint: /code/docker-entrypoint.sh
+  command: ['mysqld',
+    '--binlog-format=row',
+    '--innodb-buffer-pool-size=10M'
+  ]
