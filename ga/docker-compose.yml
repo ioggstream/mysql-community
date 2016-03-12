@@ -1,6 +1,17 @@
 #
 # Run a master and a slave server with GTID enabled and read-only
 # 
+
+devel:
+  image: mysql-community:latest
+  environment:
+    - MYSQL_ROOT_PASSWORD=root
+    - MYSQL_REPLICA_USER=repl
+    - MYSQL_REPLICA_PASS=repl
+  volumes:
+    - .:/code
+  entrypoint: /code/docker-entrypoint.sh
+  
 master:
   image: mysql-community:latest
   hostname: master
@@ -8,7 +19,9 @@ master:
     - MYSQL_ROOT_PASSWORD=root
     - MYSQL_REPLICA_USER=repl
     - MYSQL_REPLICA_PASS=repl
-  command: mysqld --server-id=1 --log-bin=master-bin --relay-log=master-relay-bin --log-slave-updates --relay-log-recovery=1 --master-info-repository=TABLE --relay-log-info-repository=TABLE --gtid-mode=ON --enforce-gtid-consistency --report-host=master --explicit-defaults-for-timestamp
+  volumes:
+    - .:/code
+  command: mysqld  --log-bin=master-bin --relay-log=master-relay-bin --log-slave-updates --relay-log-recovery=1 --master-info-repository=TABLE --relay-log-info-repository=TABLE --gtid-mode=ON --enforce-gtid-consistency --report-host=master --explicit-defaults-for-timestamp --innodb-log-file-size=5M 
 
 
 slave:
@@ -22,4 +35,6 @@ slave:
     - MYSQL_MASTER_WAIT_TIME=60
   links:
     - master
-  command: mysqld --server-id=2 --log-bin=slave-bin --relay-log=slave-relay-bin --log-slave-updates --relay-log-recovery=1 --master-info-repository=TABLE --relay-log-info-repository=TABLE --gtid-mode=ON --enforce-gtid-consistency --report-host --explicit-defaults-for-timestamp --read-only
+  volumes:
+    - .:/code
+  command: mysqld  --log-bin=slave-bin --relay-log=slave-relay-bin --log-slave-updates --relay-log-recovery=1 --master-info-repository=TABLE --relay-log-info-repository=TABLE --gtid-mode=ON --enforce-gtid-consistency --report-host --explicit-defaults-for-timestamp --read-only --innodb-log-file-size=5M
