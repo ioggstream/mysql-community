@@ -1,0 +1,12 @@
+fabric_user: fabric
+fabric_pass: fabric
+
+admin_user: admin
+admin_pass: password
+
+root_user: root
+root_pass: root
+
+xmlrpc_endpoint: { host: localhost, port: 32274, user: admin, password: password}
+
+

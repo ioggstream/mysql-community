@@ -1,0 +1,7 @@
+
+[fabric]
+fabric_fabric_1		ansible_connection=docker
+
+[db]
+fabric_mysql_[1:3]	ansible_connection=docker
+

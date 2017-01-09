@@ -1,0 +1,12 @@
+- hosts: all
+  tasks:
+
+   - name: All nodes require a fabric user.
+     shell: mysql -proot -e"set @@sql_log_bin=0; create user if not exists 'fabric'; alter user 'fabric' identified by 'fabric'; grant all on *.* to 'fabric';"
+
+   - name: Check the grants.
+     shell: mysql -proot -e"show grants for 'fabric';" | grep 'ALL'
+
+   - name: Fabric configuration file.
+     template: src=fabric.cfg.t dest=/etc/mysql/fabric.cfg
+

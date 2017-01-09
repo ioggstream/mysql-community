@@ -1,0 +1,4 @@
+- hosts: fabric
+  tasks:
+    - file: path="/etc/mysql/fabric.cfg" state=present
+
