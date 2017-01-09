@@ -27,6 +27,9 @@ local-infile=0
 # Avoid messing with dns
 skip-name-resolve
 
+# Accept 5.6 show commands.
+show-compatibility-56=ON
+
 # Use GTID
 gtid-mode=ON
 enforce-gtid-consistency 
@@ -40,7 +43,7 @@ master-info-repository=TABLE
 relay-log-info-repository=TABLE
 
 
-# Be as consistent as possible
+# Be as consistent as possible and save disk space.
 innodb-flush-log-at-trx-commit=1   
 innodb_log_file_size=5M
 innodb-fast-shutdown=0

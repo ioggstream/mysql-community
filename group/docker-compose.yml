@@ -1,0 +1,27 @@
+#
+# https://dev.mysql.com/doc/refman/5.7/en/group-replication-configuring-instances.html
+#
+group:
+  image: mysql-group
+  environment: 
+  - MYSQL_ROOT_PASSWORD=root
+  - MYSQL_ROOT_HOST=%
+  volumes:
+  - .:/code
+  - ./docker-entrypoint-initdb.d/:/docker-entrypoint-initdb.d/
+  entrypoint: /code/docker-entrypoint.sh
+  command: --defaults-file=/code/my.cnf  --user=mysql
+
+router:
+  image: mysql-group
+  environment: 
+  - MYSQL_ROOT_PASSWORD=root
+  - MYSQL_ROOT_HOST=%
+  volumes:
+  - .:/code
+  - ./docker-entrypoint-initdb.d/:/docker-entrypoint-initdb.d/
+  links:
+  - group
+  entrypoint: /code/router-entrypoint.sh
+  command: mysqlrouter group_1
+
