@@ -12,7 +12,7 @@
 
     mysqlfabric manage ping
 
-Create the "ha" group and add a master and a slave.
+# Create the "ha" group and add a master and a slave.
 
     mysqlfabric group create ha
     mysqlfabric group add ha m.docker:3306
