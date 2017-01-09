@@ -3,7 +3,7 @@
     docker-compose scale fabric=1 mysql=3
     sleep 10
     
-    docker exec fabric python /code/fabric-poc.py setup localhost ${PREFIX}_mysql_{1..3}
+    docker exec fabric_fabric_1  python /code/fabric-poc.py setup localhost ${PREFIX}_mysql_{1..3}
     #docker exec -ti fabric /bin/bash
 
 
