@@ -1,4 +1,4 @@
-FROM centos:7
+FROM centos/systemd
 # basic repo stuff: EPEL and Oracle MySQL GA
 RUN yum -y install epel-release
 RUN yum -y install --nogpgcheck https://dev.mysql.com/get/mysql57-community-release-el7-11.noarch.rpm
@@ -10,14 +10,14 @@ RUN yum -y install --nogpgcheck  yum-utils \
 	iproute \
 	perl-Data-Dumper \
 	sysvinit-tools \
-        dstat iproute tree vim openssh
+	dstat iproute tree vim openssh
 
 # Common for Enterprise and Community
 RUN yum -y install --nogpgcheck mysql-utilities
 
 # Community
 RUN yum -y install --nogpgcheck mysql-community-server \
-	mysql-community-test 
+	mysql-community-client mysql-router mysql-shell
 RUN yum -y install iproute
 
 # Remove all packages from image
@@ -35,9 +35,6 @@ RUN chown -R mysql:mysql /var/lib/mysql
 RUN chown -R backup:mysql /backup
 
 COPY ./my.cnf /etc/
-COPY ./docker-entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
-COPY ./Dockerfile /Dockerfile
+COPY ./Dockerfile.systemd /Dockerfile.systemd
 
-ENTRYPOINT [ "/entrypoint.sh" ]
 
