@@ -7,6 +7,7 @@ RUN yum -y install --nogpgcheck http://dev.mysql.com/get/mysql57-community-relea
 RUN yum -y install --nogpgcheck  yum-utils \
 	supervisor \
 	hostname \
+	iproute \
 	perl-Data-Dumper \
 	sysvinit-tools
 
@@ -18,9 +19,14 @@ RUN yum -y install --nogpgcheck mysql-community-server \
 	mysql-community-test 
 RUN yum -y install iproute
 
+# Remove all packages from image
+RUN yum -y clean all
+
 RUN rm /var/lib/mysql/* -fr
+RUN rm /var/lib/mysql-files/* -fr
 
 VOLUME /var/lib/mysql
+VOLUME /var/lib/mysql-files
 VOLUME /backup
 
 RUN useradd backup -d /backup -g mysql

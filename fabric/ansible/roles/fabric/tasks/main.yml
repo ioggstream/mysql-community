@@ -1,0 +1,27 @@
+- name: Check mysql running
+  include: pre-test.yml
+
+- name: All nodes require a fabric user.
+  shell: mysql -proot -e"set @@sql_log_bin=0; create user if not exists 'fabric'; alter user 'fabric' identified by 'fabric'; grant all on *.* to 'fabric';"
+
+- name: Fabric configuration file.
+  template: src=fabric.cfg.t dest=/etc/mysql/fabric.cfg
+
+- name: Check if fabric is running
+  shell: pgrep -fl daemonize
+  register: result
+  ignore_errors: True
+
+- name: Configure fabric
+  shell: mysqlfabric manage setup --param=storage.user=fabric
+  when: result|failed
+
+- name: Start fabric
+  shell: mysqlfabric manage start --daemonize
+  when: result|failed
+
+- name: Wait for fabric listening.
+  wait_for: host={{xmlrpc_endpoint['host']}} port={{xmlrpc_endpoint['port']+1}} delay=3 search_regex=fabric
+
+- name: Post-install tests
+  include: test.yml

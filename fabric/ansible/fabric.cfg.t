@@ -9,7 +9,7 @@ logdir = /var/log
 [storage]
 address = localhost:3306
 user = fabric
-password = {fabric_password}
+password = {{fabric_pass}}
 database = fabric
 auth_plugin = mysql_native_password
 connection_timeout = 6
@@ -18,14 +18,14 @@ connection_delay = 1
 
 [servers]
 user = fabric
-password = {fabric_password}
+password = {{fabric_pass}}
 unreachable_timeout = 5
 
 [protocol.xmlrpc]
-address = {xmlrpc_host}:{xmlrpc_port}
+address = {{xmlrpc_endpoint['host']}}:{{xmlrpc_endpoint['port']}}
 threads = 5
 user = admin
-password = {admin_password}
+password = {{admin_pass}}
 disable_authentication = no
 realm = MySQL Fabric
 ssl_ca = 
@@ -35,7 +35,7 @@ ssl_key =
 [protocol.mysql]
 address = localhost:32275
 user = admin
-password = {admin_password}
+password = {{admin_pass}}
 disable_authentication = no
 ssl_ca = 
 ssl_cert = 
@@ -72,5 +72,5 @@ ttl = 1
 # mysql client configuration to connect 
 # to the various server of the infrastructure
 [client]
-password = {fabric_password}
+password = {{fabric_pass}}
 

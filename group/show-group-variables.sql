@@ -1,0 +1,1 @@
+SELECT @@transaction_write_set_extraction, @@group_replication_group_name, @@group_replication_start_on_boot, @@group_replication_local_address, @@group_replication_group_seeds, @@group_replication_bootstrap_group, @@group_replication_single_primary_mode, @@group_replication_enforce_update_everywhere_checks ;

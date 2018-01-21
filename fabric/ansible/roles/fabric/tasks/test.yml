@@ -1,0 +1,2 @@
+- name: Fabric server is up and running.
+  shell: mysqlfabric manage ping

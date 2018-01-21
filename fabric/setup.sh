@@ -3,7 +3,7 @@
     docker-compose scale fabric=1 mysql=3
     sleep 10
     
-    docker exec fabric python /code/fabric-poc.py setup localhost ${PREFIX}_mysql_{1..3}
+    docker exec fabric_fabric_1  python /code/fabric-poc.py setup localhost ${PREFIX}_mysql_{1..3}
     #docker exec -ti fabric /bin/bash
 
 
@@ -12,7 +12,7 @@
 
     mysqlfabric manage ping
 
-Create the "ha" group and add a master and a slave.
+# Create the "ha" group and add a master and a slave.
 
     mysqlfabric group create ha
     mysqlfabric group add ha m.docker:3306
