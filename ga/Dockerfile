@@ -16,6 +16,7 @@ RUN yum -y install --nogpgcheck mysql-utilities
 # Community
 RUN yum -y install --nogpgcheck mysql-community-server \
 	mysql-community-test 
+RUN yum -y install iproute
 
 RUN rm /var/lib/mysql/* -fr
 

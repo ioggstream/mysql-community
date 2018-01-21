@@ -56,9 +56,9 @@ if [ ! -d "$DATADIR/mysql" -a "${1%_safe}" = 'mysqld' ]; then
 	
 	# Using set -e we should always EXIT_SUCCESS even if nothing is grep'd
 	DEFAULTS_FILE_ARGS=$(egrep -o -- '--defaults(|-extra)-file=[^ ]+' <<< "$@" || true)
-	echo "Running mysql_install_db with options ${DEFAULTS_FILE_ARGS}"
-	mysql_install_db ${DEFAULTS_FILE_ARGS} --force --explicit-defaults-for-timestamp --user=mysql 
-	echo 'Finished mysql_install_db'
+	echo "Running mysqld with options ${DEFAULTS_FILE_ARGS}"
+	mysqld ${DEFAULTS_FILE_ARGS} --initialize --explicit-defaults-for-timestamp --user=mysql 
+	echo 'Finished mysqld'
 	
 	# These statements _must_ be on individual lines, and _must_ end with
 	# semicolons (no line breaks or comments are permitted).

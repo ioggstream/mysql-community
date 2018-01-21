@@ -27,6 +27,16 @@ waitserver(){
         fi
 	return 0
 }
+get_last_octet_from_ip(){
+        local ip=$(ip r l scope link)
+        echo ${ip//*./}
+}
+
+get_ip(){
+        local ip=$(ip r l scope link)
+        echo ${ip//*src /}
+}
+
 
 # TODO read this from the MySQL config?
 DATADIR='/var/lib/mysql'
@@ -167,5 +177,5 @@ if [ "$MYSQL_MASTER_ROOT_PASS" ]; then
 	disown
 fi
 
-exec "$@" --user=mysql 
+exec "$@" --user=mysql  --server-id=$(get_last_octet_from_ip) 
 

@@ -13,7 +13,7 @@
 #   - fabric server should provision new containers
 #     via docker.sock
 fabric:
-  image: mysql-fabric:v1
+  image: mysql-fabric:latest
   hostname: fabric
   environment:
     - MYSQL_ROOT_PASSWORD=root
@@ -23,7 +23,7 @@ fabric:
   command: ['mysqld', '--binlog-format=row', '--innodb-buffer-pool-size=10M']
 
 s:
-  image: mysql-fabric:v1
+  image: mysql-fabric:latest
   environment:
     - MYSQL_ROOT_PASSWORD=root
   volumes:
@@ -36,7 +36,7 @@ s:
 
 
 l:
-  image: mysql-fabric:v1
+  image: mysql-fabric:latest
   environment:
     - MYSQL_ROOT_PASSWORD=root
   volumes:
@@ -50,7 +50,7 @@ l:
 
 
 s2:
-  image: mysql-fabric:v1
+  image: mysql-fabric:latest
   environment:
     - MYSQL_ROOT_PASSWORD=root
   volumes:
@@ -64,7 +64,7 @@ s2:
 
 
 s3:
-  image: mysql-fabric:v1
+  image: mysql-fabric:latest
   environment:
     - MYSQL_ROOT_PASSWORD=root
   volumes:

@@ -1,4 +1,4 @@
-FROM mysql/mysql-server:5.6
+FROM mysql/mysql-server:5.7
 MAINTAINER robipolli@gmail.com
 RUN yum -y install http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-5.noarch.rpm
 
@@ -19,10 +19,11 @@ RUN yum -y install --nogpgcheck  yum-utils \
 RUN yum -y install --nogpgcheck mysql-utilities
 
 # Community
-RUN yum -y install --nogpgcheck mysql-community-* 
-RUN wget http://bit.ly/1CxNuZe -O mysql-utilities-1.6.1.tar.gz
-RUN tar xf mysql-utilities-1.6.1.tar.gz -C /tmp
-RUN (cd /tmp/mysql-utilities-1.6.1; python setup.py install;)
+# RUN yum -y install --nogpgcheck mysql-community-server
+# RUN wget http://bit.ly/1CxNuZe -O mysql-utilities-1.6.1.tar.gz
+# RUN tar xf mysql-utilities-1.6.1.tar.gz -C /tmp
+# RUN (cd /tmp/mysql-utilities-1.6.1; python setup.py install;)
+RUN pip install https://github.com/ioggstream/mysql-fabric/archive/docker-provider.zip
 
 RUN rm /var/lib/mysql/* -fr
 

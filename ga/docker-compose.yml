@@ -2,7 +2,7 @@
 # Run a master and a slave server with GTID enabled and read-only
 # 
 master:
-  image: mysql-community:latest
+  image: ioggstream/mysql-community:latest
   hostname: master
   environment:
     - MYSQL_ROOT_PASSWORD=root

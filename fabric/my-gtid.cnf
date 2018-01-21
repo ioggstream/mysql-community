@@ -32,6 +32,8 @@ gtid-mode=ON
 enforce-gtid-consistency 
 log-slave-updates
 log-bin
+# Set server id just to make --initialize working with log-bin.
+server-id=0
 
 # and crash-safe replication
 relay-log-recovery=1
